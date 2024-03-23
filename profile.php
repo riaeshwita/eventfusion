@@ -1,11 +1,12 @@
-<?php 
+<?php
 session_start();
 if (empty($_SESSION['user'])) {
   header("Location: index.php");
 }
 include 'db.php';
 
-$userId=$_SESSION['user'];
+// Retrieve user name for greeting (unchanged)
+$userId = $_SESSION['user'];
 $stmt = $conn->prepare("SELECT userName FROM user WHERE userId=?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
@@ -13,8 +14,8 @@ $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $userName = $row['userName'];
 
-$stmt = $conn->prepare("SELECT event_name, no_of_tickets, UniqueId FROM booked_tickets WHERE userId=?");
-$stmt->bind_param("i", $userId);
+// Fetch events from event_list table
+$stmt = $conn->prepare("SELECT * FROM eventlist");  // Modified SQL statement
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -37,40 +38,30 @@ $result = $stmt->get_result();
 
 </head>
 <body>
-  <?php 
-    include 'header.php';
-  ?>
-	<div class="container">
-		<h2 style="text-align:center">
-      
-      <?php 
-      echo "Hello,".$userName;
-      ?>
-
+  <?php include 'header.php'; ?>
+  <div class="container">
+    <h2 style="text-align:center">
+      <?php echo "Hello, " . $userName; ?>
     </h2>
-    <h3 style="text-align:center">Events booked/Orders</h3>
-      <table class="table table-bordered table-hover table-striped" align=center>
-        <thead>
-          <tr>
-            <th>Event</th>
-            <th>No. of Tickets</th>
-            <th>Unique order ID</th>
-          </tr>
-        </thead>
-        <tbody> 
-          <?php
-              while ($row = $result->fetch_assoc()) {
-              echo "
-              <tr>
-                <td>".$row['event_name']."</td>
-                <td>".$row['no_of_tickets']."</td>
-                <td>".$row['UniqueId']."</td>
-              </tr>
-              ";
-              }
-          ?>
-        </tbody>
-      </table>
+    <h3 style="text-align:center">Available Events</h3>  <table class="table table-bordered table-hover table-striped" align=center>
+      <thead>
+        <tr>
+          <?php while ($column = $result->fetch_field()) { ?>
+            <th><?php echo $column->name; ?></th>  <?php } ?>
+        </tr>
+      </thead>
+      <tbody>
+        <?php
+          while ($row = $result->fetch_assoc()) {
+            echo "<tr>";
+            foreach ($row as $key => $value) {
+              echo "<td>" . $value . "</td>";
+            }
+            echo "</tr>";
+          }
+        ?>
+      </tbody>
+    </table>
   </div>
 </body>
 </html>
